@@ -22,6 +22,7 @@ async function run() {
     try{
         const productsCollection = client.db("HugeResale").collection("products");
         const bookingsCollection = client.db("HugeResale").collection("bookings");
+        const usersCollection = client.db("HugeResale").collection("users");
 
         app.get('/category/:id', async(req, res) => {
             const id = req.params.id;
@@ -33,6 +34,18 @@ async function run() {
         app.post('/bookings', async(req, res) => {
             const query = req.body;
             const result = await bookingsCollection.insertOne(query)
+            res.send(result)
+        })
+
+        app.put('/users', async(req, res) => {
+            const user = req.body;
+            const email = req.body.email;
+            const filter = {email: email}
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: user
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc, options)
             res.send(result)
         })
     }
