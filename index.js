@@ -21,6 +21,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try{
         const productsCollection = client.db("HugeResale").collection("products");
+        const bookingsCollection = client.db("HugeResale").collection("bookings");
 
         app.get('/category/:id', async(req, res) => {
             const id = req.params.id;
@@ -28,7 +29,12 @@ async function run() {
             const result = await productsCollection.find(query).toArray()
             res.send(result)
         })
-
+        
+        app.post('/bookings', async(req, res) => {
+            const query = req.body;
+            const result = await bookingsCollection.insertOne(query)
+            res.send(result)
+        })
     }
     catch(error) {
         console.log(error)
