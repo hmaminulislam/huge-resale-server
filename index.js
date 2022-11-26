@@ -21,6 +21,7 @@ async function run() {
     const productsCollection = client.db("HugeResale").collection("products");
     const bookingsCollection = client.db("HugeResale").collection("bookings");
     const usersCollection = client.db("HugeResale").collection("users");
+    const wishlistsCollection = client.db("HugeResale").collection("wishlists");
 
     app.get("/category/:id", async (req, res) => {
       const id = req.params.id;
@@ -110,6 +111,40 @@ async function run() {
         const result = await usersCollection.deleteOne(query)
         res.send(result)
     })
+
+    //wishlist
+    app.get("/wishlists", async(req, res) => {
+      const email = req.query.email;
+      const query = {email: email};
+      const result = await wishlistsCollection.find(query).toArray()
+      if(result) {
+        res.send(result);
+      }
+    });
+
+
+    app.delete("/wishlists/:id", async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)};
+      const result = await wishlistsCollection.deleteOne(query)
+      if(result) {
+        res.send(result);
+      }
+    });
+
+    app.post("/wishlists", async(req, res) => {
+      const query = req.body;
+      
+      const productId = query.productId;
+      const email = query.email;
+      const productQuery = {productId: productId, email: email}
+      const productInWishlist = await wishlistsCollection.findOne(productQuery)
+      if(productInWishlist) {
+        return res.send({ alreadyAddWishlist: true });
+      }
+      const result = await wishlistsCollection.insertOne(query)
+      res.send(result)
+    });
     
   } catch (error) {
     console.log(error);
