@@ -30,10 +30,30 @@ async function run() {
             const result = await productsCollection.find(query).toArray()
             res.send(result)
         })
+
+        app.post('/products', async(req, res) => {
+            const query = req.body;
+            const result = await productsCollection.insertOne(query)
+            res.send(result)
+        })
+
+        app.get('/bookings', async(req, res) => {
+            const email = req.query.email;
+            const query = {email: email}
+            const result = await bookingsCollection.find(query).toArray()
+            res.send(result)
+        })
         
         app.post('/bookings', async(req, res) => {
             const query = req.body;
             const result = await bookingsCollection.insertOne(query)
+            res.send(result)
+        })
+
+        app.get("/users/:id", async(req, res) => {
+            const email = req.params.id;
+            const query = {email: email}
+            const result = await usersCollection.findOne(query)
             res.send(result)
         })
 
