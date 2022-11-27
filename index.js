@@ -40,6 +40,42 @@ async function run() {
     const usersCollection = client.db("HugeResale").collection("users");
     const wishlistsCollection = client.db("HugeResale").collection("wishlists");
 
+    //verify admin
+    const verifyAdmin = async(req, res, next) => {
+      const email = req.query.email;
+    const query = { email: email };
+    const user = await usersCollection.findOne(query);
+    if (user) {
+      if (user.role === "admin") {
+        res.send({
+          status: "success",
+          role: true,
+        });
+      } else {
+        res.send({ role: false });
+      }
+    }
+    next()
+    }
+
+    //verify seller
+    const verifySeller = async(req, res, next) => {
+      const email = req.query.email;
+    const query = { email: email };
+    const user = await usersCollection.findOne(query);
+    if (user) {
+      if (user.role === "seller") {
+        res.send({
+          status: "success",
+          role: true,
+        });
+      } else {
+        res.send({ role: false });
+      }
+    }
+    next()
+    }
+
     //jwt token
     app.get('/jwt', async (req, res) => {
       const email = req.query.email;
@@ -60,7 +96,7 @@ async function run() {
             }
     })
 
-    app.get("/category/:id", verifyJwt, async (req, res) => {
+    app.get("/category/:id", async (req, res) => {
       const id = req.params.id;
       const query = { brand: id };
       const result = await productsCollection.find(query).toArray();
@@ -68,19 +104,31 @@ async function run() {
     });
 
     app.get("/products", verifyJwt, async (req, res) => {
+      const userEmail = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (userEmail !== decodedEmail) {
+        return res.status(403).send({ message: "forbiden access" });
+      }
+
       const email = req.query.email;
       const query = { email: email };
       const result = await productsCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.post("/products", verifyJwt, async (req, res) => {
+    app.post("/products", async (req, res) => {
       const query = req.body;
       const result = await productsCollection.insertOne(query);
       res.send(result);
     });
 
     app.get("/bookings", verifyJwt, async (req, res) => {
+      const userEmail = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (userEmail !== decodedEmail) {
+        return res.status(403).send({ message: "forbiden access" });
+      }
+
       const email = req.query.email;
       const query = { email: email };
       const result = await bookingsCollection.find(query).toArray();
@@ -89,7 +137,7 @@ async function run() {
       }
     });
 
-    app.get("/bookings/:id", verifyJwt, async (req, res) => {
+    app.get("/bookings/:id", async (req, res) => {
       const id = req.params.id;
       const query = { productId: id };
       const result = await bookingsCollection.findOne(query);
@@ -98,15 +146,15 @@ async function run() {
       }
     });
 
-    app.post("/bookings", verifyJwt, async (req, res) => {
+    app.post("/bookings", async (req, res) => {
       const query = req.body;
       const result = await bookingsCollection.insertOne(query);
       res.send(result);
     });
 
     //All users api
-    app.get("/users/:id", async (req, res) => {
-      const email = req.params.id;
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
       const query = { email: email };
       const result = await usersCollection.findOne(query);
       res.send(result);
@@ -114,6 +162,12 @@ async function run() {
 
 
     app.get("/sellers", verifyJwt, async (req, res) => {
+      const userEmail = req.headers.email;
+      const decodedEmail = req.decoded.email;
+      if (userEmail !== decodedEmail) {
+        return res.status(403).send({ message: "forbiden access" });
+      }
+
       const query = { role: "seller" };
       const result = await usersCollection.find(query).toArray();
       if (result) {
@@ -122,6 +176,12 @@ async function run() {
     });
 
     app.get("/buyers", verifyJwt, async (req, res) => {
+      const userEmail = req.headers.email;
+      const decodedEmail = req.decoded.email;
+      if (userEmail !== decodedEmail) {
+        return res.status(403).send({ message: "forbiden access" });
+      }
+
       const query = { role: "buyer" };
       const result = await usersCollection.find(query).toArray();
       if (result) {
@@ -146,14 +206,42 @@ async function run() {
     });
 
     app.delete('/users/:email', verifyJwt, async(req, res) => {
+      const userEmail = req.params.email;
+      const decodedEmail = req.decoded.email;
+      if (userEmail !== decodedEmail) {
+        return res.status(403).send({ message: "forbiden access" });
+      }
+
         const email = req.params.email;
         const query = {email: email}
         const result = await usersCollection.deleteOne(query)
         res.send(result)
     })
 
+    app.get('/admin', verifyJwt, verifyAdmin, async(req, res) => {
+      const userEmail = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (userEmail !== decodedEmail) {
+        return res.status(403).send({ message: "forbiden access" });
+      }
+    })
+
+    app.get('/seller', verifyJwt, verifySeller,  async(req, res) => {
+      const userEmail = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (userEmail !== decodedEmail) {
+        return res.status(403).send({ message: "forbiden access" });
+      }
+    })
+
     //wishlist
     app.get("/wishlists", verifyJwt, async(req, res) => {
+      const userEmail = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (userEmail !== decodedEmail) {
+        return res.status(403).send({ message: "forbiden access" });
+      }
+
       const email = req.query.email;
       const query = {email: email};
       const result = await wishlistsCollection.find(query).toArray()
@@ -164,6 +252,12 @@ async function run() {
 
 
     app.delete("/wishlists/:id", verifyJwt, async(req, res) => {
+      const userEmail = req.headers.email;
+      const decodedEmail = req.decoded.email;
+      if (userEmail !== decodedEmail) {
+        return res.status(403).send({ message: "forbiden access" });
+      }
+
       const id = req.params.id;
       const query = {_id: ObjectId(id)};
       const result = await wishlistsCollection.deleteOne(query)
@@ -172,9 +266,8 @@ async function run() {
       }
     });
 
-    app.post("/wishlists", verifyJwt, async(req, res) => {
+    app.post("/wishlists", async(req, res) => {
       const query = req.body;
-      
       const productId = query.productId;
       const email = query.email;
       const productQuery = {productId: productId, email: email}
