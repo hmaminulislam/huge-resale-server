@@ -89,9 +89,7 @@ async function run() {
       const query = { email: email };
       const user = await usersCollection.findOne(query);
       if (user) {
-        const token = jwt.sign({ email }, process.env.JWT_ACCESS_TOKEN, {
-          expiresIn: "1d",
-        });
+        const token = jwt.sign({ email }, process.env.JWT_ACCESS_TOKEN);
         res.status(403).send({ accessToken: token });
       } else {
         res.send({ accessToken: "" });
